@@ -1,0 +1,6 @@
+authme: false
+database_host: ""
+database_port: ""
+database_name: ""
+database_login: ""
+database_password: ""
