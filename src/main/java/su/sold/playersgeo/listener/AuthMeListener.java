@@ -29,7 +29,7 @@ public class AuthMeListener implements Listener {
             public void run() {
                 JSONObject data = null;
                 try {
-                    data = Geo.getGeoIPData(Objects.requireNonNull(ply.getAddress()).getHostName());
+                    data = Geo.getGeoIPData(Objects.requireNonNull(ply.getAddress()).getAddress().getHostAddress());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -39,6 +39,7 @@ public class AuthMeListener implements Listener {
                 }else{
                     Plugin.log.info("[PlayersGeo] Geo data not found for " +ply.getName());
                 }
+
             }
         }).start();
 

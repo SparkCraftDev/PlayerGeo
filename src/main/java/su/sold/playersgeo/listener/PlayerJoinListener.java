@@ -28,7 +28,7 @@ public class PlayerJoinListener implements Listener {
             public void run() {
                 JSONObject data = null;
                 try {
-                    data = Geo.getGeoIPData(Objects.requireNonNull(ply.getAddress()).getHostName());
+                    data = Geo.getGeoIPData((Objects.requireNonNull(ply.getAddress()).getAddress().getHostAddress()));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
