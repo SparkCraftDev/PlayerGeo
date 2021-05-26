@@ -24,13 +24,24 @@ public class AuthMeListener implements Listener {
     @EventHandler(priority = EventPriority.LOW)
     public void onLogin(LoginEvent event) throws IOException {
         final Player ply = event.getPlayer();
-        JSONObject data = Geo.getGeoIPData(Objects.requireNonNull(ply.getAddress()).getHostName());
-        if(data!=null) {
-            Plugin.log.info("[PlayersGeo] "+ply.getName()+ " from "+data.getString("geoplugin_city")+", "+data.getString("geoplugin_countryCode"));
-            db.add(ply.getName(), data.getString("geoplugin_city"), data.getString("geoplugin_countryName"), data.getString("geoplugin_countryCode"), data.getString("geoplugin_latitude"), data.getString("geoplugin_longitude"));
-        }else{
-            Plugin.log.info("[PlayersGeo] Geo data not found for " +ply.getName());
-        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                JSONObject data = null;
+                try {
+                    data = Geo.getGeoIPData(Objects.requireNonNull(ply.getAddress()).getHostName());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                if(data!=null) {
+                    Plugin.log.info("[PlayersGeo] "+ply.getName()+ " from "+data.getString("geoplugin_city")+", "+data.getString("geoplugin_countryCode"));
+                    db.add(ply.getName(), data.getString("geoplugin_city"), data.getString("geoplugin_countryName"), data.getString("geoplugin_countryCode"), data.getString("geoplugin_latitude"), data.getString("geoplugin_longitude"));
+                }else{
+                    Plugin.log.info("[PlayersGeo] Geo data not found for " +ply.getName());
+                }
+            }
+        }).start();
+
     }
 
 }
