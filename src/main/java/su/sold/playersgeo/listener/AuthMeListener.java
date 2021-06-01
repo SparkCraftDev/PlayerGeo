@@ -21,7 +21,7 @@ public class AuthMeListener implements Listener {
     public AuthMeListener(JavaPlugin plugin){
         db = new Database(plugin);
     }
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.NORMAL)
     public void onLogin(LoginEvent event) throws IOException {
         final Player ply = event.getPlayer();
         new Thread(new Runnable() {

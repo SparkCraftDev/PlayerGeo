@@ -20,7 +20,7 @@ public class PlayerJoinListener implements Listener {
     public PlayerJoinListener(JavaPlugin plugin){
         db = new Database(plugin);
     }
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.NORMAL)
     public void onJoin(PlayerJoinEvent event) throws IOException {
         final Player ply = event.getPlayer();
         new Thread(new Runnable() {
