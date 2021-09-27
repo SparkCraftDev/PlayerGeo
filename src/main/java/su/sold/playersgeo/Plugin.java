@@ -1,5 +1,6 @@
 package su.sold.playersgeo;
 
+import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginManager;
@@ -17,33 +18,37 @@ public final class Plugin extends JavaPlugin {
     private Listener authMeListener;
     private Listener playerJoinListener;
     public FileConfiguration cfg = getConfig();
+    public Database db = new Database(this);
     @Override
     public void onEnable() {
         saveDefaultConfig();
         final PluginManager pluginManager = getServer().getPluginManager();
         if(cfg.getBoolean("authme")){
-            log.info("[PlayersGeo] Starting in AuthMe mode...");
+            log.info("§c[§ePlayers§6Geo§c] §fStarting in AuthMe mode...");
             if (pluginManager.isPluginEnabled("AuthMe")) {
                 if (authMeListener == null) {
                     authMeListener = new AuthMeListener(this);
                     getServer().getPluginManager().registerEvents(authMeListener, this);
                 }
             }else{
-                log.severe("[PlayersGeo] AuthMe mode is enabled in the config, but AuthMe plugin is disabled or not installed.");
+                log.severe("AuthMe mode is enabled in the config, but AuthMe plugin is disabled or not installed.");
                 this.setEnabled(false);
             }
         }else{
-            log.info("[PlayersGeo] Starting in normal mode...");
+            log.info("§c[§ePlayers§6Geo§c] §fStarting in normal mode...");
             if(playerJoinListener == null){
                 playerJoinListener = new PlayerJoinListener(this);
                 getServer().getPluginManager().registerEvents(playerJoinListener, this);
             }
         }
+        PluginCommand geoCommand = getCommand("geo");
+        assert geoCommand != null;
+        geoCommand.setExecutor(new GeoCommand(this));
     }
 
     @Override
     public void onDisable() {
-        log.info("[PlayersGeo] Disabling PlayersGeo...");
+        log.info("Disabling PlayersGeo...");
     }
 
 

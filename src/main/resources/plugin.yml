@@ -4,4 +4,15 @@ main: su.sold.playersgeo.Plugin
 api-version: 1.16
 softdepend: [ AuthMe ]
 authors: [ Sold ]
-website: sold.su
+website: sparkcraft.ru
+commands:
+  geo:
+    description: PlayersGeo command
+permissions:
+  playersgeo.*:
+    default: op
+  playersgeo.check:
+    default: false
+  playersgeo.notifyonjoin:
+    default: false
+prefix: "PlayersGeo"

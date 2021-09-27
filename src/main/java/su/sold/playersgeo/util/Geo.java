@@ -7,6 +7,8 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.json.JSONObject;
 import su.sold.playersgeo.Plugin;
 
@@ -35,7 +37,7 @@ public class Geo {
                         return json;
                     }
                 }else{
-                    Plugin.log.severe("[PlayersGeo] www.geoplugin.net returned an empty response!");
+                    Plugin.log.severe("www.geoplugin.net returned an empty response!");
                     return null;
                 }
             }
@@ -43,5 +45,12 @@ public class Geo {
             e.printStackTrace();
         }
         return null;
+    }
+    public static void notifyOnPlayerJoin(String message){
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if(player.hasPermission("playersgeo.notifyonjoin")){
+                player.sendMessage("§c[§ePlayers§6Geo§c] §f "+message);
+            }
+        }
     }
 }

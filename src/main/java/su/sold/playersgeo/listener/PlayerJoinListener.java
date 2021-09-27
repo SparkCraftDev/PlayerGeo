@@ -16,9 +16,9 @@ import java.io.IOException;
 import java.util.Objects;
 
 public class PlayerJoinListener implements Listener {
-    private Database db;
-    public PlayerJoinListener(JavaPlugin plugin){
-        db = new Database(plugin);
+    private Plugin plugin;
+    public PlayerJoinListener(Plugin p){
+        plugin = p;
     }
     @EventHandler(priority = EventPriority.NORMAL)
     public void onJoin(PlayerJoinEvent event) throws IOException {
@@ -33,10 +33,11 @@ public class PlayerJoinListener implements Listener {
                     e.printStackTrace();
                 }
                 if(data!=null) {
-                    Plugin.log.info("[PlayersGeo] "+ply.getName()+ " from "+data.getString("geoplugin_city")+", "+data.getString("geoplugin_countryCode"));
-                    db.add(ply.getName(), data.getString("geoplugin_city"), data.getString("geoplugin_countryName"), data.getString("geoplugin_countryCode"), data.getString("geoplugin_latitude"), data.getString("geoplugin_longitude"));
+                    Plugin.log.info("§c[§ePlayers§6Geo§c]§f "+ply.getName()+ " §e from §l"+data.getString("geoplugin_city")+", "+data.getString("geoplugin_countryCode"));
+                    Geo.notifyOnPlayerJoin(ply.getName()+ " §efrom §l"+data.getString("geoplugin_city")+", "+data.getString("geoplugin_countryCode"));
+                    plugin.db.add(ply.getName(), data.getString("geoplugin_city"), data.getString("geoplugin_countryName"), data.getString("geoplugin_countryCode"), data.getString("geoplugin_latitude"), data.getString("geoplugin_longitude"));
                 }else{
-                    Plugin.log.info("[PlayersGeo] Geo data not found for " +ply.getName());
+                    Plugin.log.info("§c[§ePlayers§6Geo§c] §cGeo data not found for §e" +ply.getName());
                 }
             }
         }).start();

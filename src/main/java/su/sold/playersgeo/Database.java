@@ -3,10 +3,10 @@ package su.sold.playersgeo;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import javax.annotation.Nullable;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Database {
     public static Database database;
@@ -113,5 +113,23 @@ public class Database {
             e.printStackTrace();
         }
         return true;
+    }
+    public List<String> get(String username){
+        List<String> result = new ArrayList<String>();
+        try{
+            String sql = "SELECT * FROM `PlayersGeo` WHERE `username` = ?;";
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setString(1, username);
+            ResultSet data= preparedStatement.executeQuery();
+            if(data.next()) {
+                result.add(data.getString(2));
+                result.add(data.getString(3));
+                result.add(data.getString(4));
+            }
+
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+        return result;
     }
 }
