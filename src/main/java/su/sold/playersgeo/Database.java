@@ -1,134 +1,99 @@
 package su.sold.playersgeo;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
 
-import javax.annotation.Nullable;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Database {
-    public static Database database;
-    private final JavaPlugin plugin;
+    private static Database instance;
+    private final HikariDataSource dataSource;
     private final FileConfiguration cfg;
 
-    public Database(JavaPlugin plugin) {
-        this.plugin = plugin;
-        this.cfg = plugin.getConfig();
-        if(connect()){
-            createDatabases();
-        }else{
-            Plugin.log.severe("[PlayersGeo] Couldn't connect to database. Check database credentials in config.yml");
-            plugin.onDisable();
-        }
+    private Database(FileConfiguration cfg) {
+        this.cfg = cfg;
+
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(buildLink());
+        config.setUsername(cfg.getString("database_login"));
+        config.setPassword(cfg.getString("database_password"));
+        config.setMinimumIdle(5);
+        config.addDataSourceProperty("cachePrepStmts", "true");
+        config.addDataSourceProperty("prepStmtCacheSize", "250");
+        config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+        this.dataSource = new HikariDataSource(config);
+
+        createDatabases();
     }
 
-    private Connection connection;
-
-
-    private boolean connect() {
-        try {
-            if (connection != null && !connection.isClosed()) {
-                return true;
-            }
-
-            synchronized (this) {
-                Class.forName("com.mysql.jdbc.Driver");
-                connection = DriverManager.getConnection(buildLink(), getLogin(), getPassword());
-                if (!connection.isValid(5)) {
-                    return connect();
-                }
-                return true;
-            }
-        } catch (SQLException | ClassNotFoundException e) {
-            e.printStackTrace();
+    public static Database getInstance(FileConfiguration config) {
+        if (instance == null) {
+            instance = new Database(config);
         }
-
-        return false;
+        return instance;
     }
 
-    void createDatabases() {
-        try {
-
-            String sql = "CREATE TABLE IF NOT EXISTS `PlayersGeo` (`username` TEXT NOT NULL, `city` TEXT NULL, `country_name` TEXT NULL, `country_code` TEXT NULL, `coordinates` POINT NULL, `showonmap` TINYINT NOT NULL DEFAULT 0, UNIQUE INDEX `username_UNIQUE` (`username` ASC));";
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.execute();
-
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private boolean isConnectionValid() {
-        try {
-            boolean isConnectionValid = connection.isValid(5);
-            if (!isConnectionValid) {
-                return connect();
-            } else {
-                return true;
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return false;
+    public void closeConnection() {
+        dataSource.close();
     }
 
     private String buildLink() {
-
         return "jdbc:mysql://" + cfg.getString("database_host") + ":" + cfg.getString("database_port") + "/" + cfg.getString("database_name");
     }
 
-    private String getLogin() {
-        return cfg.getString("database_login");
+    void createDatabases() {
+        String sql = "CREATE TABLE IF NOT EXISTS `PlayersGeo` (`username` TEXT NOT NULL, `city` TEXT NULL, `country_name` TEXT NULL, `country_code` TEXT NULL, `coordinates` POINT NULL, `showonmap` TINYINT NOT NULL DEFAULT 0, UNIQUE INDEX `username_UNIQUE` (`username` ASC));";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.execute();
+        } catch (SQLException e) {
+            Bukkit.getLogger().severe(e.getMessage());
+        }
     }
 
-    private String getPassword() {
-        return cfg.getString("database_password");
-
-    }
-    public boolean add(String username, String city, String country_name, String country_code, String latitude, String longitude){
-        try{
-            String sql = "INSERT INTO `PlayersGeo` (`username`, `city`, `country_name`, `country_code`, `coordinates`) VALUES (?, ?, ?, ?, POINT(?, ?)) ON DUPLICATE KEY UPDATE `city`=?, `country_name`=?, `country_code`=?, `coordinates`=POINT(?,?);";
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+    public void add(String username, String city, String countryName, String countryCode, String latitude, String longitude) {
+        String sql = "INSERT INTO `PlayersGeo` (`username`, `city`, `country_name`, `country_code`, `coordinates`) VALUES (?, ?, ?, ?, POINT(?, ?)) ON DUPLICATE KEY UPDATE `city`=?, `country_name`=?, `country_code`=?, `coordinates`=POINT(?,?);";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setString(1, username);
             preparedStatement.setString(2, city);
-            preparedStatement.setString(3, country_name);
-            preparedStatement.setString(4, country_code);
+            preparedStatement.setString(3, countryName);
+            preparedStatement.setString(4, countryCode);
             preparedStatement.setString(5, longitude);
             preparedStatement.setString(6, latitude);
 
             //duplicate
             preparedStatement.setString(7, city);
-            preparedStatement.setString(8, country_name);
-            preparedStatement.setString(9, country_code);
+            preparedStatement.setString(8, countryName);
+            preparedStatement.setString(9, countryCode);
             preparedStatement.setString(10, longitude);
             preparedStatement.setString(11, latitude);
 
-
             preparedStatement.execute();
-        }catch (SQLException e){
-            e.printStackTrace();
+        } catch (SQLException e) {
+            Bukkit.getLogger().severe(e.getMessage());
         }
-        return true;
     }
-    public List<String> get(String username){
-        List<String> result = new ArrayList<String>();
-        try{
-            String sql = "SELECT * FROM `PlayersGeo` WHERE `username` = ?;";
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+
+    public List<String> get(String username) {
+        List<String> result = new ArrayList<>();
+        String sql = "SELECT * FROM `PlayersGeo` WHERE `username` = ?;";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setString(1, username);
-            ResultSet data= preparedStatement.executeQuery();
-            if(data.next()) {
+            ResultSet data = preparedStatement.executeQuery();
+
+            if (data.next()) {
                 result.add(data.getString(2));
                 result.add(data.getString(3));
                 result.add(data.getString(4));
             }
-
-        }catch (SQLException e){
-            e.printStackTrace();
+        } catch (SQLException e) {
+            Bukkit.getLogger().severe(e.getMessage());
         }
         return result;
     }

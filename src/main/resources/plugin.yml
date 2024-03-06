@@ -3,7 +3,7 @@ version: ${project.version}
 main: su.sold.playersgeo.Plugin
 api-version: 1.16
 softdepend: [ AuthMe ]
-authors: [ Sold ]
+authors: [ Sold, Spark ]
 website: sparkcraft.ru
 commands:
   geo:
